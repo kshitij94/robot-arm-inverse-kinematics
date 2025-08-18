@@ -1,0 +1,21 @@
+This repo contians three packages with the goal of demonstrating reverse kinematics using moveit, ros controllers and urdf.
+
+
+### moveit_config package:
+This package was created by the moveit setup assistance app. It contains the demo.launch.py file which uses all the config files to start rviz and moveit nodes.
+
+### urdf_tutorial:
+This package contains the urdf and cpp code for the hardware interface.
+
+### hello_moveit:
+This package as of now is not used. However the goal of this package is to define a node that can send target pose goals to the moveit package. These target pose goals would be the position and orientation. Rightnow its not able to set the target goal as they are invalid and i dont know of a way to see valid pose. There is a move_group_interface.getCurrentPose, which is also failing to get the joint states. 
+
+
+## How to run:
+colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON;
+source install/setup.bash;
+ros2 launch moveit_config demo.launch.py;
+ros2 run hello_moveit hello_moveit;
+
+
+

@@ -1,0 +1,5 @@
+# Default initial positions for roboturdf's ros2_control fake system
+
+initial_positions:
+  joint2: 0
+  joint5: 0

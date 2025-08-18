@@ -1,0 +1,18 @@
+# MoveIt uses this configuration for controller management
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - arm_controller
+
+  arm_controller:
+    type: FollowJointTrajectory
+    joints:
+      - joint2
+      - joint5
+    action_ns: follow_joint_trajectory
+    default: true
+    allowed_execution_duration_scaling: 5.0
+    allowed_goal_duration_margin: 0.5
+    
