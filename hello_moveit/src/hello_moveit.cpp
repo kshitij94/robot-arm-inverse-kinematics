@@ -36,16 +36,10 @@ int main(int argc, char *argv[])
   auto move_group_interface = MoveGroupInterface(node, "arm");
 
   // Wait for the CurrentStateMonitor to receive joint states
-  if (last_joint_state_msg) {
-    RCLCPP_INFO(logger, "Last received joint state message timestamp: %f seconds", rclcpp::Time(last_joint_state_msg->header.stamp).seconds());
-  } else {
-    RCLCPP_INFO(logger, "No joint state message received yet.");
-  }
-  rclcpp::sleep_for(std::chrono::seconds(10));
+  RCLCPP_INFO(logger, "Waiting for MoveGroupInterface to receive current state...");
+  move_group_interface.setStartStateToCurrentState();
 
-  // Create a publisher to visualize the target pose
-  auto const pose_publisher = node->create_publisher<geometry_msgs::msg::PoseStamped>("target_pose", 10);
-
+  /*
   while (rclcpp::ok())
   {
     // Set the current pose as the target
@@ -53,18 +47,45 @@ int main(int argc, char *argv[])
     RCLCPP_INFO(logger, "current pose: x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
                 target_pose.position.x, target_pose.position.y, target_pose.position.z,
                 target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
-
-    auto const target_pose_stamped = [&]
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+  }
+*/
+  /*
+    auto const target_pose = []
     {
-      geometry_msgs::msg::PoseStamped msg;
-      msg.header.frame_id = move_group_interface.getPlanningFrame();
-      msg.header.stamp = node->get_clock()->now();
-      msg.pose = target_pose;
+      geometry_msgs::msg::Pose msg;
+      msg.position.x = -0.012780;
+      msg.position.y = -0.015466;
+      msg.position.z = 0.064217;
+      msg.orientation.x = 0.262475;
+      msg.orientation.y = 0.284748;
+      msg.orientation.z = -0.624880;
+      msg.orientation.w = 0.677902;
       return msg;
     }();
-    pose_publisher->publish(target_pose_stamped);
+    */
+  auto const target_pose = move_group_interface.getCurrentPose().pose;
 
-    rclcpp::sleep_for(std::chrono::seconds(10));
+  RCLCPP_INFO(logger, "current pose: x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
+              target_pose.position.x, target_pose.position.y, target_pose.position.z,
+              target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
+
+  move_group_interface.setPoseTarget(target_pose);
+  auto const [success, plan] = [&move_group_interface]
+  {
+    moveit::planning_interface::MoveGroupInterface::Plan msg;
+    auto const ok = static_cast<bool>(move_group_interface.plan(msg));
+    return std::make_pair(ok, msg);
+  }();
+
+  // Execute the plan
+  if (success)
+  {
+    move_group_interface.execute(plan);
+  }
+  else
+  {
+    RCLCPP_ERROR(logger, "Planning failed!");
   }
 
   rclcpp::shutdown();
