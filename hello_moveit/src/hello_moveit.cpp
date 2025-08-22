@@ -51,26 +51,28 @@ int main(int argc, char *argv[])
   }
 */
   /*
-    auto const target_pose = []
-    {
-      geometry_msgs::msg::Pose msg;
-      msg.position.x = -0.012780;
-      msg.position.y = -0.015466;
-      msg.position.z = 0.064217;
-      msg.orientation.x = 0.262475;
-      msg.orientation.y = 0.284748;
-      msg.orientation.z = -0.624880;
-      msg.orientation.w = 0.677902;
-      return msg;
-    }();
-    */
+  auto const target_pose = []
+  {
+    geometry_msgs::msg::Pose msg;
+    msg.position.x = -0.009225;
+    msg.position.y = -0.000191;
+    msg.position.z = 0.064217;
+    msg.orientation.x = 0.464386;
+    msg.orientation.y = -0.030455;
+    msg.orientation.z = 0.883212;
+    msg.orientation.w = 0.057916;
+    return msg;
+  }();
+  */
   auto const target_pose = move_group_interface.getCurrentPose().pose;
 
   RCLCPP_INFO(logger, "current pose: x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
               target_pose.position.x, target_pose.position.y, target_pose.position.z,
               target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
 
-  move_group_interface.setPoseTarget(target_pose);
+  // Set a joint value target (e.g., home position)
+  std::vector<double> joint_group_positions(7, 0.0); // Assuming 7 joints, all to 0.0
+  move_group_interface.setJointValueTarget(joint_group_positions);
   auto const [success, plan] = [&move_group_interface]
   {
     moveit::planning_interface::MoveGroupInterface::Plan msg;

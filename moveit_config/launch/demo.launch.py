@@ -9,10 +9,20 @@ from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-from moveit_configs_utils.launches import generate_rsp_launch,generate_move_group_launch
+# from moveit_configs_utils.launches import generate_rsp_launch,generate_move_group_launch # Remove this import
 
 
 def generate_launch_description():
+    # Declare arguments for use_sim_time
+    declared_arguments = []
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="false",
+            description="Use simulation clock if true",
+        )
+    )
+
     moveit_config = (
         MoveItConfigsBuilder("roboturdf", package_name="moveit_config")
         .robot_description(
@@ -20,7 +30,9 @@ def generate_launch_description():
         )
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .robot_description_kinematics(file_path="config/kinematics.yaml")
-        .to_moveit_configs(        )
+        .pilz_cartesian_limits(file_path="config/pilz_cartesian_limits.yaml") # Add this line
+        .to_moveit_configs(
+        )
     )
 
     # RViz
@@ -39,7 +51,7 @@ def generate_launch_description():
             moveit_config.robot_description_kinematics,
         ],
     )
-# [rviz2-1] [WARN] [1755411046.621380456] [rviz2.moveit.ros.robot_model_loader]: No kinematics plugins defined. Fill and load kinematics.yaml!
+
     # Static TF
     static_tf = Node(
         package="tf2_ros",
@@ -76,15 +88,54 @@ def generate_launch_description():
             "arm_controller",
         ]
     ]
-    # Move group node
-    
+
+    # Robot State Publisher
+    robot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        respawn=True,
+        output="screen",
+        parameters=[moveit_config.robot_description, {
+                "publish_frequency": 15.0,
+            },
+        ],
+    )
+
+    # Move Group Node (explicitly defined)
+    move_group_node = Node(
+        package="moveit_ros_move_group",
+        executable="move_group",
+        output="screen",
+        parameters=[
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            moveit_config.robot_description_kinematics,
+            moveit_config.planning_pipelines,
+            moveit_config.trajectory_execution,
+            moveit_config.planning_scene_monitor,
+            moveit_config.pilz_cartesian_limits,
+            {"publish_robot_description_semantic": True},
+            {"allow_trajectory_execution": True},
+            {"publish_planning_scene": True},
+            {"publish_geometry_updates": True},
+            {"publish_state_updates": True},
+            {"publish_transforms_updates": True},
+            {"monitor_dynamics": False},
+            {"use_sim_time": LaunchConfiguration("use_sim_time")},
+        ],
+        arguments=["--ros-args", "--log-level", "info"],
+    )
+
     return LaunchDescription(
+        declared_arguments +
         [
             rviz_node,
             static_tf,
             ros2_control_node,
+            robot_state_publisher, # Add robot_state_publisher
+            move_group_node,       # Add the new move_group_node
         ]
         + spawn_controllers
-        + [generate_rsp_launch(moveit_config)]
-        + [generate_move_group_launch(moveit_config)]
+        # + [generate_rsp_launch(moveit_config)] # Remove this
+        # + [generate_move_group_launch(moveit_config)] # Remove this
     )
