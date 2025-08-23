@@ -39,55 +39,44 @@ int main(int argc, char *argv[])
   RCLCPP_INFO(logger, "Waiting for MoveGroupInterface to receive current state...");
   move_group_interface.setStartStateToCurrentState();
 
-  /*
-  while (rclcpp::ok())
-  {
-    // Set the current pose as the target
-    auto const target_pose = move_group_interface.getCurrentPose().pose;
-    RCLCPP_INFO(logger, "current pose: x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
-                target_pose.position.x, target_pose.position.y, target_pose.position.z,
-                target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-  }
-*/
-  /*
-  auto const target_pose = []
-  {
-    geometry_msgs::msg::Pose msg;
-    msg.position.x = -0.009225;
-    msg.position.y = -0.000191;
-    msg.position.z = 0.064217;
-    msg.orientation.x = 0.464386;
-    msg.orientation.y = -0.030455;
-    msg.orientation.z = 0.883212;
-    msg.orientation.w = 0.057916;
-    return msg;
-  }();
-  */
-  auto const target_pose = move_group_interface.getCurrentPose().pose;
+  // 1. hello_moveit will store the current pose in a variable. Lets call this poseA.
+  geometry_msgs::msg::Pose poseA = move_group_interface.getCurrentPose().pose;
+  RCLCPP_INFO(logger, "Stored initial pose (poseA): x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
+              poseA.position.x, poseA.position.y, poseA.position.z,
+              poseA.orientation.x, poseA.orientation.y, poseA.orientation.z, poseA.orientation.w);
 
-  RCLCPP_INFO(logger, "current pose: x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
-              target_pose.position.x, target_pose.position.y, target_pose.position.z,
-              target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
+  // Define a hardcoded poseB from the user's RViz input
+  geometry_msgs::msg::Pose zeroPose;
+  zeroPose.position.x = -0.009716;
+  zeroPose.position.y = -0.000445;
+  zeroPose.position.z = 0.064217;
+  zeroPose.orientation.x = -0.620928;
+  zeroPose.orientation.y = 0.023638;
+  zeroPose.orientation.z = 0.782944;
+  zeroPose.orientation.w = 0.029811;
 
-  move_group_interface.setNumPlanningAttempts(10); // Increase planning attempts
-  move_group_interface.setPoseTarget(target_pose);
-  auto const [success, plan] = [&move_group_interface]
-  {
-    moveit::planning_interface::MoveGroupInterface::Plan msg;
-    auto const ok = static_cast<bool>(move_group_interface.plan(msg));
-    return std::make_pair(ok, msg);
-  }();
+  // Plan and move to poseB
+  RCLCPP_INFO(logger, "Attempting to plan and move to zero position...");
+  RCLCPP_INFO(logger, "Stored initial pose (zeroPose): x=%f, y=%f, z=%f, qx=%f, qy=%f, qz=%f, qw=%f",
+              zeroPose.position.x, zeroPose.position.y, zeroPose.position.z,
+              zeroPose.orientation.x, zeroPose.orientation.y, zeroPose.orientation.z, zeroPose.orientation.w);
 
-  // Execute the plan
+  move_group_interface.setPoseTarget(zeroPose);
+  moveit::planning_interface::MoveGroupInterface::Plan zeroPlan;
+  bool success = (move_group_interface.plan(zeroPlan) == moveit::core::MoveItErrorCode::SUCCESS);
+
   if (success)
   {
-    move_group_interface.execute(plan);
+    RCLCPP_INFO(logger, "Planning successful! Executing plan to move to poseB.");
+    move_group_interface.execute(zeroPlan);
   }
   else
   {
-    RCLCPP_ERROR(logger, "Planning failed!");
+    RCLCPP_ERROR(logger, "Planning failed to move to poseB!");
   }
+
+  // Wait for a moment
+  rclcpp::sleep_for(std::chrono::seconds(5));
 
   rclcpp::shutdown();
   spin_thread.join();
