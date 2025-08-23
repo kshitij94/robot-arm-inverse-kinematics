@@ -15,7 +15,9 @@ This package as of now is not used. However the goal of this package is to defin
 colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON;
 source install/setup.bash;
 ros2 launch moveit_config demo.launch.py;
-ros2 run hello_moveit hello_moveit;
+
+source install/setup.bash;
+ros2 launch moveit_config hello_moveit.launch.py
 
 
 

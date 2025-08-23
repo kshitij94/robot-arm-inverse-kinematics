@@ -30,7 +30,8 @@ def generate_launch_description():
         )
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .robot_description_kinematics(file_path="config/kinematics.yaml")
-        .pilz_cartesian_limits(file_path="config/pilz_cartesian_limits.yaml") # Add this line
+        .pilz_cartesian_limits(file_path="config/pilz_cartesian_limits.yaml")
+        .joint_limits(file_path="config/joint_limits.yaml") # Add this line
         .to_moveit_configs(
         )
     )
@@ -114,6 +115,7 @@ def generate_launch_description():
             moveit_config.trajectory_execution,
             moveit_config.planning_scene_monitor,
             moveit_config.pilz_cartesian_limits,
+            moveit_config.joint_limits, # Add this line
             {"publish_robot_description_semantic": True},
             {"allow_trajectory_execution": True},
             {"publish_planning_scene": True},

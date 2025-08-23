@@ -70,9 +70,8 @@ int main(int argc, char *argv[])
               target_pose.position.x, target_pose.position.y, target_pose.position.z,
               target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
 
-  // Set a joint value target (e.g., home position)
-  std::vector<double> joint_group_positions(7, 0.0); // Assuming 7 joints, all to 0.0
-  move_group_interface.setJointValueTarget(joint_group_positions);
+  move_group_interface.setNumPlanningAttempts(10); // Increase planning attempts
+  move_group_interface.setPoseTarget(target_pose);
   auto const [success, plan] = [&move_group_interface]
   {
     moveit::planning_interface::MoveGroupInterface::Plan msg;
